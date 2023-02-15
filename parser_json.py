@@ -4,21 +4,37 @@ import json
 
 class ParsJson:
     def __init__(self, body):
-        """Метод разбирает, присланный json запрос,
-         и инициализирует конструктор класса ParsJson"""
-        self.id = body['id']
-        self.jsonrpc = body["jsonrpc"]
-        self.method = body["method"]
-        self.a = self.__valid_data(body["params"][0])
-        self.b = self.__valid_data(body["params"][1])
+        """Метод инициализирует конструктор класса ParsJson"""
+        self._body = body
     
-    def __valid_data(self, value):
-        if isinstance(value, (int, float)):
-            return value
-        raise ValueError("Неверный тип данных")
+    @property
+    def json(self):
+        """ Метод проверяет наличие полей в json, который был передан в request"""
+        
+        keys = ["id", "jsonrpc", "method", "params"]
+        for i in keys:
+            if len(self._body) != len(keys) or i not in self._body:
+                raise KeyError(f"Неправильный ключ {i}")
+        return self._body
     
-    def __check_method(self) -> int:
-        """ Функция проверяет, какой метод нужно вызвать из класса Maths """
+    @property
+    def id(self):
+        if not isinstance(self.json['id'], int):
+            raise TypeError("id должно быть целым числом")
+        if self.json['id'] <= 0:
+            raise ValueError("id не должен быть меньше или равен нулю")
+        return self.json['id']
+    
+    @property
+    def jsonrpc(self):
+        if type(self.json['jsonrpc']) != str:
+            raise TypeError("Неправильный тип данных в jsonrpc")
+        if self.json['jsonrpc'] != "2.0":
+            raise ValueError("Неправильная версия jsonrpc")
+        return self.json['jsonrpc']
+    
+    @property
+    def method(self):
         result = Maths(self.a, self.b)
         name_func = {"divide": result.divide,
                      "add": result.add,
@@ -26,16 +42,54 @@ class ParsJson:
                      "sub": result.sub,
                      }
         for i in name_func:
-            if self.method == i:
+           
+            if self.json['method'] == i:
                 return name_func[i]
+            
+        raise NameError("Имя метода введено неправильно!")
+
+    @property
+    def params(self):
+        if type(self.json['params']) != list:
+            raise TypeError("Неверный тип данных")
+        
+        elif len(self.json['params']) != 2:
+            raise ValueError("Неверно задано значение поля params")
+        
+        else:
+            return self.json['params']
+        
+            
+        
+        
+    @property
+    def a(self):
+        return self.__valid_data(self.params[0])
     
     @property
-    def pars_request(self):
+    def b(self):
+        return self.__valid_data(self.params[1])
+    
+    def __valid_data(self, value):
+        """Метод проверяет, чтобы переданные значения были либо int, либо float """
+        if isinstance(value, (int, float)):
+            return value
+        raise TypeError("Неверный тип данных")
+    
+    @property
+    def json_data(self):
         """Метод возвращает json ответ в виде строки """
         data = {
             "jsonrpc": self.jsonrpc,
-            "result": self.__check_method(),
+            "result": self.method,
             "id": self.id
         }
+        return data
+    
+    @property
+    def json_response(self):
+        return json.dumps(self.json_data)
         
-        return json.dumps(data)
+    def generate_link(self):
+        with open('api/v1/data.json', 'w') as fp:
+            json.dump(self.json_response, fp)
