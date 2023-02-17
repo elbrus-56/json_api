@@ -1,6 +1,7 @@
+import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
-import json
+
 from parser_json import ParsJson
 
 
@@ -12,17 +13,18 @@ class HttpProcessor(BaseHTTPRequestHandler):
             
             try:
                 # Reading the file
-                with open('api/v1/data.json', "r") as fp:
+                with open('api/v1/data.json', "r+") as fp:
                     file_to_open = json.load(fp)
+                    fp.truncate(0)
                 
                 self.send_response(200)
                 self.send_header("Content-type", "application/json")
             except:
-                file_to_open = "File not found"
+                file_to_open = "Make a new request and refresh the pages"
                 self.send_response(404)
             
             self.end_headers()
-            self.wfile.write(bytes(file_to_open, 'utf-8'))
+            self.wfile.write(bytes(str(file_to_open), 'utf-8'))
         
         elif self.path == '/':
             self.send_response(200)

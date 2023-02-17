@@ -1,8 +1,8 @@
+import json
 import sys
 import pytest
-from parser_json import ParsJson
-
 sys.path.append("/home/ubuntu/PycharmProjects/json-api/")
+from parser_json import ParsJson
 
 
 class TestParsJson:
@@ -177,6 +177,70 @@ class TestParsJson:
     def test_var_a_with_wrong_type_data(self, var):
         with pytest.raises(TypeError):
             ParsJson(var).b
+    
+    @pytest.mark.parametrize("var, expected",
+                             [({"jsonrpc": "2.0", "method": "divide", "params": [4, 2], "id": 8},
+                               {"jsonrpc": "2.0", "result": 2.0, "id": 8}),
+                              ({"method": "add", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 6, "id": 8}),
+                              ({"method": "mull", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 8, "id": 8}),
+                              ({"method": "sub", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 2, "id": 8})
+                              ])
+    def test_json_data(self, var, expected):
+        assert ParsJson(var).json_data == expected
+    
+    @pytest.mark.parametrize("var",
+                             [({"method": "divide", "params": [4, 2], "id": 8}),
+                              ({"method": "sub", "params": [4, 2], "id": 8, "jsonrpc": "2.0", 1: 123},),
+                              ({},),
+                              ([],),
+                              ({"method1": "sub", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": [4, 2], "id": 8, "jsonrpcs": "2.0"},),
+                              ({"method": "sub", "": [4, 2], "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": (4, 2), "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": ["4", 2], "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": [4, "2"], "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": [4, 2], "id": "8", "jsonrpc": "2.0"},),
+                              ({"method": "sub", "params": [4, 2], "id": 8, "jsonrpc": 2.0},),
+                              ({"method": ["sub"], "params": [4, 2], "id": 8, "jsonrpc": "2.0"},),
+                              ({"method": None, "params": [4, 2], "id": 8, "jsonrpc": "2.0"},),
+    
+                              ])
+    def test_json_with_wrong_data(self, var):
+        with pytest.raises(KeyError):
+            ParsJson(var).json_data
+    
+    @pytest.fixture()
+    def generate_json_file(self, request):
+        return ParsJson(request.param).generate_link()
+    
+    @pytest.mark.parametrize("generate_json_file, expected",
+                             [({"jsonrpc": "2.0", "method": "divide", "params": [4, 2], "id": 8},
+                               {"jsonrpc": "2.0", "result": 2.0, "id": 8}),
+                              ({"method": "add", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 6, "id": 8}),
+                              ({"method": "mull", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 8, "id": 8}),
+                              ({"method": "sub", "params": [4, 2], "id": 8, "jsonrpc": "2.0"},
+                               {"jsonrpc": "2.0", "result": 2, "id": 8})
+                              ],
+                             indirect=['generate_json_file'])
+    def test_generate_link(self, generate_json_file, expected):
+        generate_json_file
+        with open("api/v1/data.json", "r") as fp:
+            file = json.load(fp)
+        assert file == expected
+    
+    @pytest.mark.parametrize("generate_json_file",
+                             [{"jsonrpc": "2.0", "method": "divide", "params": [4, 2], "id": 8}
+                              ], indirect=['generate_json_file'])
+    def test_generate_link_with_wrong_path(self, generate_json_file):
+        generate_json_file
+        with pytest.raises(FileNotFoundError):
+            with open("1/data.json", "r") as fp:
+                json.load(fp)
     
     @pytest.fixture()
     def generate_json_response(self, request):

@@ -1,5 +1,6 @@
-from maths import Maths
 import json
+
+from maths import Maths
 
 
 class ParsJson:
@@ -9,7 +10,7 @@ class ParsJson:
     
     @property
     def json(self):
-        """ Метод проверяет наличие полей в json, который был передан в request"""
+        """ Метод проверяет наличие полей в json, который был передан в request."""
         
         keys = ["id", "jsonrpc", "method", "params"]
         for i in keys:
@@ -42,15 +43,15 @@ class ParsJson:
                      "sub": result.sub,
                      }
         for i in name_func:
-           
+            
             if self.json['method'] == i:
                 return name_func[i]
-            
+        
         raise NameError("Имя метода введено неправильно!")
-
+    
     @property
     def params(self):
-        if type(self.json['params']) != list:
+        if not isinstance(self.json['params'], list):
             raise TypeError("Неверный тип данных")
         
         elif len(self.json['params']) != 2:
@@ -58,10 +59,7 @@ class ParsJson:
         
         else:
             return self.json['params']
-        
-            
-        
-        
+    
     @property
     def a(self):
         return self.__valid_data(self.params[0])
@@ -89,7 +87,10 @@ class ParsJson:
     @property
     def json_response(self):
         return json.dumps(self.json_data)
-        
+    
     def generate_link(self):
-        with open('api/v1/data.json', 'w') as fp:
-            json.dump(self.json_response, fp)
+        try:
+            with open('api/v1/data.json', 'w') as fp:
+                json.dump(self.json_data, fp)
+        except(FileExistsError, FileNotFoundError):
+            raise FileNotFoundError("Файл не найден")
