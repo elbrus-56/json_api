@@ -1,6 +1,7 @@
 import json
 import sys
 import pytest
+
 sys.path.append("/home/ubuntu/PycharmProjects/json-api/")
 from parser_json import ParsJson
 
@@ -30,13 +31,14 @@ class TestParsJson:
             ParsJson(var).json
     
     def test_id_with_correct_value(self):
-        json = {"jsonrpc": "2.0", "method": "divide", "params": [2, 8], "id": 8}
-        c = ParsJson(json)
+        json_request = {"jsonrpc": "2.0", "method": "divide", "params": [2, 8], "id": 8}
+        c = ParsJson(json_request)
         assert c.id == 8
     
     def test_id_type_value(self):
-        json = {"jsonrpc": "2.0", "method": "divide", "params": [2, 8], "id": 8}
-        c = ParsJson(json)
+        json_request = {"jsonrpc": "2.0",
+                        "method": "divide", "params": [2, 8], "id": 8}
+        c = ParsJson(json_request)
         assert type(c.id) == int
     
     @pytest.mark.parametrize("var", [
@@ -58,8 +60,9 @@ class TestParsJson:
             ParsJson(var).id
     
     def test_jsonrpc_with_correct_data(self):
-        json = {"jsonrpc": "2.0", "method": "divide", "params": [2, 8], "id": 8}
-        c = ParsJson(json)
+        json_request = {"jsonrpc": "2.0",
+                        "method": "divide", "params": [2, 8], "id": 8}
+        c = ParsJson(json_request)
         assert c.jsonrpc == "2.0"
     
     @pytest.mark.parametrize("var", [
@@ -174,7 +177,7 @@ class TestParsJson:
         ({"jsonrpc": "2.0", "method": "add", "params": [6, None], "id": 6}),
     
     ])
-    def test_var_a_with_wrong_type_data(self, var):
+    def test_var_b_with_wrong_type_data(self, var):
         with pytest.raises(TypeError):
             ParsJson(var).b
     
